@@ -62,3 +62,17 @@ for i in range(len(currencyRate[listOfCurrency[0]])):
 
 save = pd.DataFrame.from_dict(currencyRate, orient="index", columns=columns)
 save.to_csv("currency.csv")
+
+growthRate = {}
+if len(currencyRate[listOfCurrency[0]]) > 1:
+    for i in range(len(currencyRate)):
+        growthRate[listOfCurrency[i]] = []
+        for j in range(len(currencyRate[listOfCurrency[0]])-1):
+            growthRateValue = float(currencyRate[listOfCurrency[i]][j+1])/float(currencyRate[listOfCurrency[i]][j])
+            growthRate[listOfCurrency[i]].append(growthRateValue*100-100)
+
+columnsG = []
+for i in range(len(currencyRate[listOfCurrency[0]])-1):
+    columnsG.append("value" + " " + str(i))
+saveG = pd.DataFrame.from_dict(growthRate, orient="index", columns=columnsG)
+saveG.to_csv("growthRate.csv")
