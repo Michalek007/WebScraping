@@ -3,15 +3,17 @@ import requests
 import time
 import json
 from bs4 import BeautifulSoup
+from datetime import date
 
 file = 'C:\\Users\\Public\\currency.json'
+dateFile = 'C:\\Users\\Public\\date.json'
 url = "https://e-kursy-walut.pl/"
 listOfValues = []
 listOfCurrency = []
 currencyRate = {}
+today = date.today()
 
-
-def GetValue(str):
+def get_value(str):
     value = ""
     x = False
     z = 0
@@ -34,10 +36,10 @@ soup = BeautifulSoup(request_data, "html.parser")
 for item in soup.find_all("td", {"class": "price"}):
     static = item.find("strong")
     # print(GetValue(str(item)))
-    listOfValues.append(GetValue(str(item)))
+    listOfValues.append(get_value(str(item)))
 for item in soup.find_all("td", {"class": "img"}):
     # print(GetValue(str(item)))
-    listOfCurrency.append(GetValue(str(item)))
+    listOfCurrency.append(get_value(str(item)))
 for i in range(len(listOfValues)):
     currencyRate[listOfCurrency[i]] = [listOfValues[i]]
 
@@ -56,11 +58,21 @@ if data is not None:
 with open(file, 'w', encoding='utf-8') as write_file:
     json.dump(currencyRate, write_file)
 
-columns = []
-for i in range(len(currencyRate[listOfCurrency[0]])):
-    columns.append("value" + " " + str(i))
+try:
+    with open(dateFile, 'r', encoding='utf-8') as read_file:
+        dateList = json.load(read_file)
+except (FileExistsError, FileNotFoundError, PermissionError):
+    dateList = None
+finally:
+    pass
+if dateList is not None:
+    dateList.append(str(today))
+else:
+    dateList = [str(today)]
+with open(dateFile, 'w', encoding='utf-8') as write_file:
+    json.dump(dateList, write_file)
 
-save = pd.DataFrame.from_dict(currencyRate, orient="index", columns=columns)
+save = pd.DataFrame.from_dict(currencyRate, orient="index", columns=dateList)
 save.to_csv("currency.csv")
 
 growthRate = {}
@@ -71,8 +83,6 @@ if len(currencyRate[listOfCurrency[0]]) > 1:
             growthRateValue = float(currencyRate[listOfCurrency[i]][j+1])/float(currencyRate[listOfCurrency[i]][j])
             growthRate[listOfCurrency[i]].append(growthRateValue*100-100)
 
-columnsG = []
-for i in range(len(currencyRate[listOfCurrency[0]])-1):
-    columnsG.append("value" + " " + str(i))
-saveG = pd.DataFrame.from_dict(growthRate, orient="index", columns=columnsG)
+dateList.pop(0)
+saveG = pd.DataFrame.from_dict(growthRate, orient="index", columns=dateList)
 saveG.to_csv("growthRate.csv")
